@@ -1,5 +1,6 @@
 package com.is.shop.resource;
 
+import com.is.shop.dto.CategoryDto;
 import com.is.shop.entity.Category;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
@@ -10,6 +11,7 @@ import jakarta.ws.rs.core.UriBuilder;
 
 import java.net.URI;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Path("/api/categories")
 @Produces(MediaType.APPLICATION_JSON)
@@ -18,10 +20,11 @@ import java.util.List;
 public class CategoryResource {
 
     @GET
-    public List<Category> listAll() {
-        System.out.println("Calling list of all ");
-
-        return Category.listAll();
+    public List<CategoryDto> listAll() {
+       List<Category> categories = Category.listAll();
+        return categories.stream()
+                .map(CategoryDto::fromEntity)
+                .collect(Collectors.toList());
     }
 
     @GET

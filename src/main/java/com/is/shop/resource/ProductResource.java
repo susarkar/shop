@@ -35,22 +35,23 @@ public class ProductResource {
         // Fetch category eagerly if needed often, otherwise lazy is fine
         Optional<Product> productOpt = Product.findByIdOptional(id);
         return productOpt
-                .map(product -> Response.ok(product).build())
+                .map(ProductDto::fromEntity)
+                .map(productDto -> Response.ok(productDto).build())
                 .orElse(Response.status(Response.Status.NOT_FOUND).build());
     }
 
     @POST
     @Transactional
-    public Response create(Product product) {
-        if (product == null || product.id != null || product.sku == null || product.name == null) {
+    public Response create(ProductDto productDto) {
+        if (productDto == null || productDto.id != null || productDto.sku == null || productDto.name == null) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity("Product ID must be null, SKU and Name required for creation.")
                     .build();
         }
-
+Product product = ProductDto.toEntity(productDto);
         // Handle category linking - assumes category ID is provided in the request product object
-        if (product.category != null && product.category.id != null) {
-            Category category = Category.findById(product.category.id);
+        if ( productDto.categoryId != null) {
+            Category category = Category.findById(productDto.categoryId);
             if (category == null) {
                 return Response.status(Response.Status.BAD_REQUEST)
                         .entity("Invalid Category ID provided: " + product.category.id)
@@ -60,8 +61,6 @@ public class ProductResource {
         } else {
             product.category = null; // Or handle as required if category is mandatory
         }
-
-
         product.persist();
         if (product.isPersistent()) {
             URI createdUri = UriBuilder.fromResource(ProductResource.class)
